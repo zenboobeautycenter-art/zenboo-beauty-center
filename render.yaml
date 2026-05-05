@@ -18,5 +18,7 @@ services:
         value: zenboo
       - key: SITE_PASSWORD
         sync: false
+      - key: BOOKING_WEBHOOK_URL
+        sync: false
       - key: PORT
         value: 10000

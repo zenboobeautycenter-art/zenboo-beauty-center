@@ -29,6 +29,7 @@ const SUPABASE_TABLE = process.env.SUPABASE_TABLE || "zenboo_app_state";
 const APP_STATE_ID = process.env.APP_STATE_ID || "main";
 const SITE_USER = process.env.SITE_USER || "zenboo";
 const SITE_PASSWORD = process.env.SITE_PASSWORD || "";
+const BOOKING_WEBHOOK_URL = process.env.BOOKING_WEBHOOK_URL || "";
 
 const mimeTypes = {
   ".html": "text/html; charset=utf-8",
@@ -107,6 +108,24 @@ const writeCloudData = async (data) => {
   });
 };
 
+const sendBookingNotification = async (appointment) => {
+  if (!BOOKING_WEBHOOK_URL) return;
+
+  try {
+    await fetch(BOOKING_WEBHOOK_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        event: "new_appointment",
+        business: "ZENBOO Beauty Center",
+        appointment,
+      }),
+    });
+  } catch {
+    // La cita se guarda aunque falle la notificacion externa.
+  }
+};
+
 const sendJson = (res, status, data) => {
   res.writeHead(status, {
     "Content-Type": "application/json; charset=utf-8",
@@ -179,6 +198,7 @@ const server = http.createServer((req, res) => {
         settings: {
           businessName: data.settings.businessName || "ZENBOO Beauty Center",
           instagramUrl: data.settings.instagramUrl || "",
+          appointmentHours: data.settings.appointmentHours || [],
         },
       });
     });
@@ -209,22 +229,27 @@ const server = http.createServer((req, res) => {
           return;
         }
 
-        data.appointments.push({
+        const appointment = {
           id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
           clientName: String(booking.clientName).trim(),
           phone: String(booking.phone).trim(),
           service: String(booking.service || "Unas").trim(),
           employeeId: employee.id,
           employeeName: employee.name,
+          employeePhone: employee.phone || "",
           dateIso: booking.dateIso,
           time: booking.time,
           status: "Pendiente",
           createdAt: new Date().toISOString(),
           source: "Link publico",
-        });
+          employeeWhatsappMessage: `Nueva cita en ZENBOO Beauty Center: ${String(booking.clientName).trim()}, servicio ${String(booking.service || "Unas").trim()}, fecha ${booking.dateIso}, hora ${booking.time}. Telefono clienta: ${String(booking.phone).trim()}.`,
+        };
+
+        data.appointments.push(appointment);
 
         writeData(data);
         if (hasSupabase()) await writeCloudData(data);
+        await sendBookingNotification(appointment);
         sendJson(res, 200, { ok: true });
       } catch {
         sendJson(res, 400, { ok: false, error: "Datos invalidos" });
@@ -257,6 +282,7 @@ const server = http.createServer((req, res) => {
       table: SUPABASE_TABLE,
       appStateId: APP_STATE_ID,
       protected: Boolean(SITE_PASSWORD),
+      bookingWebhook: Boolean(BOOKING_WEBHOOK_URL),
     });
     return;
   }

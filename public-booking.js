@@ -1,4 +1,3 @@
-const publicHours = ["09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00"];
 const publicState = { employees: [], appointments: [], settings: {} };
 
 const publicById = (id) => document.getElementById(id);
@@ -43,7 +42,12 @@ const renderPublicSlots = () => {
     .filter((item) => item.employeeId === employeeId && item.dateIso === dateIso && item.status !== "Cancelada")
     .map((item) => item.time);
 
-  slots.innerHTML = publicHours
+  const hours =
+    Array.isArray(publicState.settings.appointmentHours) && publicState.settings.appointmentHours.length
+      ? publicState.settings.appointmentHours
+      : ["09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00"];
+
+  slots.innerHTML = hours
     .map((hour) => {
       const taken = occupied.includes(hour);
       const active = selectedTime === hour;

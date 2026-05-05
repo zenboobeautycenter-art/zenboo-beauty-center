@@ -27,6 +27,7 @@ let store = {
     businessPhone: "",
     businessAddress: "",
     businessEmail: "",
+    appointmentHours: ["09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00"],
     dgiiEnvironment: "Pruebas",
     adminPassword: "1234",
   }),
@@ -215,6 +216,7 @@ const renderSettings = () => {
   byId("businessPhone").value = store.settings.businessPhone || "";
   byId("businessAddress").value = store.settings.businessAddress || "";
   byId("businessEmail").value = store.settings.businessEmail || "";
+  byId("appointmentHoursConfig").value = appointmentHours().join(",");
   byId("electronicEnabled").value = store.settings.electronicEnabled || "no";
   byId("dgiiEnvironment").value = store.settings.dgiiEnvironment || "Pruebas";
   byId("instagramUrl").value = store.settings.instagramUrl || "";
@@ -252,18 +254,16 @@ const keepSelectedOption = (selectId, items, placeholder) => {
   if (items.some((item) => item.id === selected)) select.value = selected;
 };
 
-const appointmentHours = [
-  "09:00",
-  "10:00",
-  "11:00",
-  "12:00",
-  "13:00",
-  "14:00",
-  "15:00",
-  "16:00",
-  "17:00",
-  "18:00",
-];
+const appointmentHours = () =>
+  Array.isArray(store.settings.appointmentHours) && store.settings.appointmentHours.length
+    ? store.settings.appointmentHours
+    : ["09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00"];
+
+const parseHours = (value) =>
+  value
+    .split(",")
+    .map((hour) => hour.trim())
+    .filter((hour) => /^\d{2}:\d{2}$/.test(hour));
 
 const renderAvailableSlots = () => {
   const employeeId = byId("appointmentEmployee").value;
@@ -280,7 +280,7 @@ const renderAvailableSlots = () => {
     .filter((item) => item.employeeId === employeeId && item.dateIso === date && item.status !== "Cancelada")
     .map((item) => item.time);
 
-  list.innerHTML = appointmentHours
+  list.innerHTML = appointmentHours()
     .map((hour) => {
       const taken = occupied.includes(hour);
       const active = selectedTime === hour;
@@ -309,6 +309,7 @@ const renderAppointments = () => {
           <div class="item-actions">
             <button class="print-btn" type="button" data-confirm-appointment="${appointment.id}">Confirmar</button>
             <button class="print-btn" type="button" data-edit-appointment="${appointment.id}">Modificar</button>
+            <a class="print-btn" href="${employeeReminderLink(appointment)}" target="_blank" rel="noreferrer">Avisar empleada</a>
             <a class="print-btn" href="${reminderLink(appointment)}" target="_blank" rel="noreferrer">Recordar</a>
             <button class="delete-btn" type="button" data-cancel-appointment="${appointment.id}">Cancelar</button>
           </div>
@@ -322,6 +323,15 @@ const reminderLink = (appointment) => {
   const phone = appointment.phone.replace(/\D/g, "");
   const text = encodeURIComponent(
     `Hola ${appointment.clientName}, te recordamos tu cita en ZENBOO Beauty Center el ${appointment.dateIso} a las ${appointment.time} con ${appointment.employeeName}.`
+  );
+  return phone ? `https://wa.me/${phone}?text=${text}` : `https://wa.me/?text=${text}`;
+};
+
+const employeeReminderLink = (appointment) => {
+  const employee = store.employees.find((item) => item.id === appointment.employeeId);
+  const phone = (employee?.phone || "").replace(/\D/g, "");
+  const text = encodeURIComponent(
+    `Nueva cita en ZENBOO Beauty Center: ${appointment.clientName}, servicio ${appointment.service}, fecha ${appointment.dateIso}, hora ${appointment.time}. Telefono clienta: ${appointment.phone}.`
   );
   return phone ? `https://wa.me/${phone}?text=${text}` : `https://wa.me/?text=${text}`;
 };
@@ -752,6 +762,7 @@ byId("businessForm").addEventListener("submit", (event) => {
   store.settings.businessPhone = byId("businessPhone").value.trim();
   store.settings.businessAddress = byId("businessAddress").value.trim();
   store.settings.businessEmail = byId("businessEmail").value.trim();
+  store.settings.appointmentHours = parseHours(byId("appointmentHoursConfig").value);
   save();
   render();
 });

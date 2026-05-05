@@ -88,6 +88,7 @@ SUPABASE_TABLE
 APP_STATE_ID
 SITE_USER
 SITE_PASSWORD
+BOOKING_WEBHOOK_URL
 
 Valores:
 
@@ -97,10 +98,12 @@ SUPABASE_TABLE=zenboo_app_state
 APP_STATE_ID=main
 SITE_USER=zenboo
 SITE_PASSWORD=elige_una_clave_segura
+BOOKING_WEBHOOK_URL=link_webhook_de_make_o_zapier
 
 Importante:
 No pongas /rest/v1/ al final del SUPABASE_URL.
 No compartas SITE_PASSWORD con clientas. Solo con personas autorizadas.
+BOOKING_WEBHOOK_URL es opcional. Sirve para mandar notificaciones cuando entra una cita.
 
 
 PASO 7 - Publicar

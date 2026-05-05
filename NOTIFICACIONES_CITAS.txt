@@ -1,0 +1,72 @@
+ZENBOO Beauty Center - notificaciones de citas
+
+Instagram no permite recibir una notificacion automatica directa en el inbox del negocio de forma simple desde una app externa.
+Para hacerlo se necesita una integracion con Meta/Instagram API o un servicio como Make, Zapier, ManyChat o similar.
+
+La app ya esta preparada para enviar una notificacion por webhook cada vez que una clienta agenda una cita.
+
+Como funciona:
+
+1. La clienta agenda en:
+   https://zenboo-beauty-center.onrender.com/reservar
+
+2. La cita se guarda en Supabase.
+
+3. La app envia los datos de la cita al webhook configurado en Render.
+
+4. Desde ese webhook puedes mandar la notificacion a:
+   - Instagram, si usas una herramienta compatible
+   - Email
+   - WhatsApp
+   - Telegram
+   - Slack
+   - Google Sheets
+
+
+Variable que debes poner en Render:
+
+BOOKING_WEBHOOK_URL
+
+Valor:
+
+El link del webhook que te de Make, Zapier, ManyChat u otra herramienta.
+
+
+Datos que envia la app:
+
+event: new_appointment
+business: ZENBOO Beauty Center
+appointment:
+  - clientName
+  - phone
+  - service
+  - employeeName
+  - employeePhone
+  - dateIso
+  - time
+  - status
+  - source
+  - employeeWhatsappMessage
+
+
+Recomendacion simple:
+
+Para WhatsApp automatico:
+
+1. En Make crea un escenario con Webhook.
+2. Copia el link del webhook.
+3. En Render pon ese link en:
+   BOOKING_WEBHOOK_URL
+4. En Make agrega el modulo de WhatsApp que uses:
+   - WhatsApp Cloud API
+   - Twilio WhatsApp
+   - 360dialog
+   - WATI
+   - otro proveedor compatible
+5. Usa estos datos:
+   Numero destino: employeePhone
+   Mensaje: employeeWhatsappMessage
+
+Importante:
+WhatsApp automatico necesita un proveedor/API autorizado.
+Sin proveedor, la app puede abrir WhatsApp con un mensaje listo usando el boton "Avisar empleada".
