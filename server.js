@@ -139,7 +139,8 @@ const requestLogin = (res) => {
 };
 
 const serveFile = (req, res) => {
-  const requestedPath = req.url === "/" ? "/index.html" : decodeURIComponent(req.url.split("?")[0]);
+  const routePath = decodeURIComponent(req.url.split("?")[0]);
+  const requestedPath = routePath === "/" ? "/index.html" : routePath === "/reservar" ? "/reservar.html" : routePath;
   const safePath = path.normalize(requestedPath).replace(/^(\.\.[/\\])+/, "");
   const filePath = path.join(ROOT, safePath);
 
