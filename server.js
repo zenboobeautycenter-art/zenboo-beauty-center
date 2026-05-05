@@ -27,6 +27,8 @@ const SUPABASE_URL = process.env.SUPABASE_URL || "";
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY || "";
 const SUPABASE_TABLE = process.env.SUPABASE_TABLE || "zenboo_app_state";
 const APP_STATE_ID = process.env.APP_STATE_ID || "main";
+const SITE_USER = process.env.SITE_USER || "zenboo";
+const SITE_PASSWORD = process.env.SITE_PASSWORD || "";
 
 const mimeTypes = {
   ".html": "text/html; charset=utf-8",
@@ -113,6 +115,27 @@ const sendJson = (res, status, data) => {
   res.end(JSON.stringify(data));
 };
 
+const isAuthorized = (req) => {
+  if (!SITE_PASSWORD) return true;
+
+  const header = req.headers.authorization || "";
+  if (!header.startsWith("Basic ")) return false;
+
+  const credentials = Buffer.from(header.slice(6), "base64").toString("utf8");
+  const separator = credentials.indexOf(":");
+  const user = credentials.slice(0, separator);
+  const password = credentials.slice(separator + 1);
+  return user === SITE_USER && password === SITE_PASSWORD;
+};
+
+const requestLogin = (res) => {
+  res.writeHead(401, {
+    "WWW-Authenticate": 'Basic realm="ZENBOO Beauty Center"',
+    "Content-Type": "text/plain; charset=utf-8",
+  });
+  res.end("Acceso protegido");
+};
+
 const serveFile = (req, res) => {
   const requestedPath = req.url === "/" ? "/index.html" : decodeURIComponent(req.url.split("?")[0]);
   const safePath = path.normalize(requestedPath).replace(/^(\.\.[/\\])+/, "");
@@ -135,6 +158,11 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  if (!isAuthorized(req)) {
+    requestLogin(res);
+    return;
+  }
+
   if (req.url === "/api/data" && req.method === "GET") {
     if (!hasSupabase()) {
       sendJson(res, 200, readData());
@@ -152,6 +180,7 @@ const server = http.createServer((req, res) => {
       database: hasSupabase() ? "supabase" : "local",
       table: SUPABASE_TABLE,
       appStateId: APP_STATE_ID,
+      protected: Boolean(SITE_PASSWORD),
     });
     return;
   }

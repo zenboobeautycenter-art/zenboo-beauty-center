@@ -14,5 +14,9 @@ services:
         value: zenboo_app_state
       - key: APP_STATE_ID
         value: main
+      - key: SITE_USER
+        value: zenboo
+      - key: SITE_PASSWORD
+        sync: false
       - key: PORT
         value: 10000

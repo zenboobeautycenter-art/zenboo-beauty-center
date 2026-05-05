@@ -86,6 +86,8 @@ SUPABASE_URL
 SUPABASE_SERVICE_KEY
 SUPABASE_TABLE
 APP_STATE_ID
+SITE_USER
+SITE_PASSWORD
 
 Valores:
 
@@ -93,9 +95,12 @@ SUPABASE_URL=https://nwzaifdoujztuacytnno.supabase.co
 SUPABASE_SERVICE_KEY=tu_service_role_larga
 SUPABASE_TABLE=zenboo_app_state
 APP_STATE_ID=main
+SITE_USER=zenboo
+SITE_PASSWORD=elige_una_clave_segura
 
 Importante:
 No pongas /rest/v1/ al final del SUPABASE_URL.
+No compartas SITE_PASSWORD con clientas. Solo con personas autorizadas.
 
 
 PASO 7 - Publicar
