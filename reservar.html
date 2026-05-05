@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Agenda tu cita - ZENBOO Beauty Center</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app public-app">
+      <header class="topbar public-topbar">
+        <section>
+          <p class="eyebrow">Agenda online</p>
+          <h1 id="publicBusinessName">ZENBOO Beauty Center</h1>
+        </section>
+      </header>
+
+      <section class="panel active">
+        <div class="section-heading">
+          <h2>Reserva tu cita de unas</h2>
+          <p>Elige empleada, fecha y una hora disponible.</p>
+        </div>
+
+        <form class="appointment-form" id="publicBookingForm">
+          <label>
+            Nombre
+            <input id="publicClientName" type="text" placeholder="Tu nombre" required />
+          </label>
+          <label>
+            Telefono
+            <input id="publicPhone" type="tel" placeholder="8095551234" required />
+          </label>
+          <label>
+            Servicio
+            <input id="publicService" type="text" value="Unas" required />
+          </label>
+          <label>
+            Empleada
+            <select id="publicEmployee" required></select>
+          </label>
+          <label>
+            Fecha
+            <input id="publicDate" type="date" required />
+          </label>
+          <input id="publicTime" type="hidden" required />
+          <div class="wide-field">
+            <strong>Horas disponibles</strong>
+            <div class="slot-grid" id="publicSlots"></div>
+          </div>
+          <button type="submit">Reservar cita</button>
+        </form>
+
+        <p class="form-message" id="publicMessage"></p>
+        <a class="link-btn" id="publicInstagram" href="#" target="_blank" rel="noreferrer" hidden>Instagram</a>
+      </section>
+    </main>
+
+    <script src="public-booking.js"></script>
+  </body>
+</html>

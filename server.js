@@ -37,6 +37,8 @@ const mimeTypes = {
   ".json": "application/json; charset=utf-8",
 };
 
+const publicPaths = new Set(["/reservar", "/reservar.html", "/public-booking.js"]);
+
 const emptyData = {
   clients: [],
   services: [],
@@ -158,7 +160,80 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  if (!isAuthorized(req)) {
+  if (req.url === "/api/public-booking-data" && req.method === "GET") {
+    const getData = hasSupabase() ? readCloudData().catch(() => readData()) : Promise.resolve(readData());
+    getData.then((data) => {
+      sendJson(res, 200, {
+        employees: data.employees.map((employee) => ({
+          id: employee.id,
+          name: employee.name,
+          role: employee.role || "",
+        })),
+        appointments: data.appointments.map((appointment) => ({
+          employeeId: appointment.employeeId,
+          dateIso: appointment.dateIso,
+          time: appointment.time,
+          status: appointment.status,
+        })),
+        settings: {
+          businessName: data.settings.businessName || "ZENBOO Beauty Center",
+          instagramUrl: data.settings.instagramUrl || "",
+        },
+      });
+    });
+    return;
+  }
+
+  if (req.url === "/api/public-booking" && req.method === "POST") {
+    let body = "";
+    req.on("data", (chunk) => {
+      body += chunk;
+      if (body.length > 100_000) req.destroy();
+    });
+    req.on("end", async () => {
+      try {
+        const booking = JSON.parse(body || "{}");
+        const data = hasSupabase() ? await readCloudData().catch(() => readData()) : readData();
+        const employee = data.employees.find((item) => item.id === booking.employeeId);
+        const exists = data.appointments.some(
+          (item) =>
+            item.employeeId === booking.employeeId &&
+            item.dateIso === booking.dateIso &&
+            item.time === booking.time &&
+            item.status !== "Cancelada"
+        );
+
+        if (!employee || exists || !booking.clientName || !booking.phone || !booking.dateIso || !booking.time) {
+          sendJson(res, 400, { ok: false, error: "Cita no disponible" });
+          return;
+        }
+
+        data.appointments.push({
+          id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+          clientName: String(booking.clientName).trim(),
+          phone: String(booking.phone).trim(),
+          service: String(booking.service || "Unas").trim(),
+          employeeId: employee.id,
+          employeeName: employee.name,
+          dateIso: booking.dateIso,
+          time: booking.time,
+          status: "Pendiente",
+          createdAt: new Date().toISOString(),
+          source: "Link publico",
+        });
+
+        writeData(data);
+        if (hasSupabase()) await writeCloudData(data);
+        sendJson(res, 200, { ok: true });
+      } catch {
+        sendJson(res, 400, { ok: false, error: "Datos invalidos" });
+      }
+    });
+    return;
+  }
+
+  const pathname = req.url.split("?")[0];
+  if (!publicPaths.has(pathname) && !isAuthorized(req)) {
     requestLogin(res);
     return;
   }

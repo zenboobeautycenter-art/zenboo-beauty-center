@@ -307,6 +307,8 @@ const renderAppointments = () => {
             <small>${escapeHtml(appointment.service)} | ${escapeHtml(appointment.employeeName)} | ${escapeHtml(appointment.status)}</small>
           </div>
           <div class="item-actions">
+            <button class="print-btn" type="button" data-confirm-appointment="${appointment.id}">Confirmar</button>
+            <button class="print-btn" type="button" data-edit-appointment="${appointment.id}">Modificar</button>
             <a class="print-btn" href="${reminderLink(appointment)}" target="_blank" rel="noreferrer">Recordar</a>
             <button class="delete-btn" type="button" data-cancel-appointment="${appointment.id}">Cancelar</button>
           </div>
@@ -902,6 +904,16 @@ document.body.addEventListener("click", (event) => {
     );
     changed = true;
   }
+  if (target.dataset.confirmAppointment) {
+    store.appointments = store.appointments.map((appointment) =>
+      appointment.id === target.dataset.confirmAppointment ? { ...appointment, status: "Confirmada" } : appointment
+    );
+    changed = true;
+  }
+  if (target.dataset.editAppointment) {
+    editAppointment(target.dataset.editAppointment);
+    return;
+  }
   if (target.dataset.slot) {
     byId("appointmentTime").value = target.dataset.slot;
     renderAvailableSlots();
@@ -1007,6 +1019,38 @@ byId("printInvoiceBtn").addEventListener("click", () => printSection("invoice"))
 
 const showInvoice = (invoice) => {
   byId("invoicePreview").innerHTML = invoiceHtml(invoice);
+};
+
+const editAppointment = (appointmentId) => {
+  const appointment = store.appointments.find((item) => item.id === appointmentId);
+  if (!appointment) return;
+
+  const dateIso = prompt("Nueva fecha de la cita (YYYY-MM-DD):", appointment.dateIso);
+  if (!dateIso) return;
+
+  const time = prompt("Nueva hora de la cita (Ej. 10:00):", appointment.time);
+  if (!time) return;
+
+  const employeeId = appointment.employeeId;
+  const occupied = store.appointments.some(
+    (item) =>
+      item.id !== appointmentId &&
+      item.employeeId === employeeId &&
+      item.dateIso === dateIso &&
+      item.time === time &&
+      item.status !== "Cancelada"
+  );
+
+  if (occupied) {
+    alert("Esa hora ya esta ocupada para esa empleada.");
+    return;
+  }
+
+  store.appointments = store.appointments.map((item) =>
+    item.id === appointmentId ? { ...item, dateIso, time, status: "Confirmada" } : item
+  );
+  save();
+  render();
 };
 
 const printSection = (mode) => {
