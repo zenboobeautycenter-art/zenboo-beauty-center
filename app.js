@@ -264,7 +264,7 @@ const renderEmployees = () => {
           </div>
           <div class="item-actions">
             <button class="print-btn" type="button" data-reset-salary="${employee.id}">Nuevo pago</button>
-            <button class="print-btn" type="button" data-edit-employee="${employee.id}">Editar</button>
+            <button class="print-btn" type="button" data-edit-employee="${employee.id}" onclick="editEmployee('${employee.id}')">Editar</button>
             <button class="delete-btn" type="button" data-delete-employee="${employee.id}">Eliminar</button>
           </div>
         </article>
@@ -390,12 +390,12 @@ const renderAppointments = () => {
               appointment.status === "Cancelada"
                 ? `
                   <span class="status-pill">Cancelada</span>
-                  <button class="delete-btn" type="button" data-delete-appointment="${appointment.id}">Borrar</button>
+                  <button class="delete-btn" type="button" data-delete-appointment="${appointment.id}" onclick="deleteAppointmentById('${appointment.id}')">Borrar</button>
                 `
                 : appointment.status === "Realizada"
                   ? `
                     <span class="status-pill done">Realizada</span>
-                    <button class="delete-btn" type="button" data-delete-appointment="${appointment.id}">Borrar</button>
+                    <button class="delete-btn" type="button" data-delete-appointment="${appointment.id}" onclick="deleteAppointmentById('${appointment.id}')">Borrar</button>
                   `
                 : `
                   <button class="print-btn" type="button" data-confirm-appointment="${appointment.id}">Confirmar</button>
@@ -1261,11 +1261,20 @@ const editEmployee = (employeeId) => {
   byId("employeeName").focus();
 };
 
+const deleteAppointmentById = (appointmentId) => {
+  store.appointments = store.appointments.filter((appointment) => appointment.id !== appointmentId);
+  save();
+  render();
+};
+
 const resetEmployeeForm = () => {
   byId("employeeEditId").value = "";
   byId("employeeSubmitBtn").textContent = "Guardar empleada";
   byId("employeeCancelEdit").hidden = true;
 };
+
+window.editEmployee = editEmployee;
+window.deleteAppointmentById = deleteAppointmentById;
 
 const payEmployee = (employeeId) => {
   const row = payrollRows().find((item) => item.employee.id === employeeId);
