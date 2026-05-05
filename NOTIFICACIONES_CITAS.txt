@@ -31,6 +31,17 @@ Valor:
 
 El link del webhook que te de Make, Zapier, ManyChat u otra herramienta.
 
+Variable opcional para avisarte a tu WhatsApp:
+
+ADMIN_WHATSAPP_PHONE
+
+Valor:
+
+Tu numero de WhatsApp Business con codigo de pais, solo numeros.
+Ejemplo Republica Dominicana:
+
+18095551234
+
 
 Datos que envia la app:
 
@@ -47,6 +58,8 @@ appointment:
   - status
   - source
   - employeeWhatsappMessage
+  - adminWhatsappPhone
+  - adminWhatsappMessage
 
 
 Recomendacion simple:
@@ -66,6 +79,10 @@ Para WhatsApp automatico:
 5. Usa estos datos:
    Numero destino: employeePhone
    Mensaje: employeeWhatsappMessage
+
+Para avisarte a ti:
+   Numero destino: adminWhatsappPhone
+   Mensaje: adminWhatsappMessage
 
 Importante:
 WhatsApp automatico necesita un proveedor/API autorizado.

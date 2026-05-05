@@ -30,6 +30,7 @@ const APP_STATE_ID = process.env.APP_STATE_ID || "main";
 const SITE_USER = process.env.SITE_USER || "zenboo";
 const SITE_PASSWORD = process.env.SITE_PASSWORD || "";
 const BOOKING_WEBHOOK_URL = process.env.BOOKING_WEBHOOK_URL || "";
+const ADMIN_WHATSAPP_PHONE = process.env.ADMIN_WHATSAPP_PHONE || "";
 
 const mimeTypes = {
   ".html": "text/html; charset=utf-8",
@@ -243,6 +244,8 @@ const server = http.createServer((req, res) => {
           createdAt: new Date().toISOString(),
           source: "Link publico",
           employeeWhatsappMessage: `Nueva cita en ZENBOO Beauty Center: ${String(booking.clientName).trim()}, servicio ${String(booking.service || "Unas").trim()}, fecha ${booking.dateIso}, hora ${booking.time}. Telefono clienta: ${String(booking.phone).trim()}.`,
+          adminWhatsappPhone: ADMIN_WHATSAPP_PHONE,
+          adminWhatsappMessage: `Nueva cita en ZENBOO Beauty Center: ${String(booking.clientName).trim()} agendo ${String(booking.service || "Unas").trim()} con ${employee.name} para el ${booking.dateIso} a las ${booking.time}. Telefono: ${String(booking.phone).trim()}.`,
         };
 
         data.appointments.push(appointment);
@@ -283,6 +286,7 @@ const server = http.createServer((req, res) => {
       appStateId: APP_STATE_ID,
       protected: Boolean(SITE_PASSWORD),
       bookingWebhook: Boolean(BOOKING_WEBHOOK_URL),
+      adminWhatsapp: Boolean(ADMIN_WHATSAPP_PHONE),
     });
     return;
   }

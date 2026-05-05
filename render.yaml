@@ -20,5 +20,7 @@ services:
         sync: false
       - key: BOOKING_WEBHOOK_URL
         sync: false
+      - key: ADMIN_WHATSAPP_PHONE
+        sync: false
       - key: PORT
         value: 10000

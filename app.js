@@ -47,6 +47,11 @@ const migrateOldData = () => {
 };
 
 const save = () => {
+  saveLocal();
+  saveToServer();
+};
+
+const saveLocal = () => {
   localStorage.setItem("zenboo_clients", JSON.stringify(store.clients));
   localStorage.setItem("zenboo_services", JSON.stringify(store.services));
   localStorage.setItem("zenboo_employees", JSON.stringify(store.employees));
@@ -57,7 +62,6 @@ const save = () => {
   localStorage.setItem("zenboo_payroll_payments", JSON.stringify(store.payrollPayments));
   localStorage.setItem("zenboo_daily_closings", JSON.stringify(store.dailyClosings));
   localStorage.setItem("zenboo_settings", JSON.stringify(store.settings));
-  saveToServer();
 };
 
 const saveToServer = () => {
@@ -78,10 +82,18 @@ const loadFromServer = async () => {
       ...data,
       settings: { ...store.settings, ...(data.settings || {}) },
     };
-    save();
+    saveLocal();
     render();
   } catch {
     render();
+  }
+};
+
+const refreshFromCloud = () => {
+  const activeTag = document.activeElement?.tagName;
+  const userIsTyping = ["INPUT", "SELECT", "TEXTAREA"].includes(activeTag);
+  if (!document.hidden && !userIsTyping) {
+    loadFromServer();
   }
 };
 
@@ -307,11 +319,19 @@ const renderAppointments = () => {
             <small>${escapeHtml(appointment.service)} | ${escapeHtml(appointment.employeeName)} | ${escapeHtml(appointment.status)}</small>
           </div>
           <div class="item-actions">
-            <button class="print-btn" type="button" data-confirm-appointment="${appointment.id}">Confirmar</button>
-            <button class="print-btn" type="button" data-edit-appointment="${appointment.id}">Modificar</button>
-            <a class="print-btn" href="${employeeReminderLink(appointment)}" target="_blank" rel="noreferrer">Avisar empleada</a>
-            <a class="print-btn" href="${reminderLink(appointment)}" target="_blank" rel="noreferrer">Recordar</a>
-            <button class="delete-btn" type="button" data-cancel-appointment="${appointment.id}">Cancelar</button>
+            ${
+              appointment.status === "Cancelada"
+                ? '<span class="status-pill">Cancelada</span>'
+                : `
+                  <button class="print-btn" type="button" data-confirm-appointment="${appointment.id}">Confirmar</button>
+                  <button class="print-btn" type="button" data-edit-appointment="${appointment.id}">Modificar</button>
+                  <a class="print-btn" href="${clientConfirmationLink(appointment)}" target="_blank" rel="noreferrer">Confirmar WhatsApp</a>
+                  <a class="print-btn" href="${clientCancellationLink(appointment)}" target="_blank" rel="noreferrer">Cancelar WhatsApp</a>
+                  <a class="print-btn" href="${employeeReminderLink(appointment)}" target="_blank" rel="noreferrer">Avisar empleada</a>
+                  <a class="print-btn" href="${reminderLink(appointment)}" target="_blank" rel="noreferrer">Recordar</a>
+                  <button class="delete-btn" type="button" data-cancel-appointment="${appointment.id}">Cancelar</button>
+                `
+            }
           </div>
         </article>
       `
@@ -323,6 +343,22 @@ const reminderLink = (appointment) => {
   const phone = appointment.phone.replace(/\D/g, "");
   const text = encodeURIComponent(
     `Hola ${appointment.clientName}, te recordamos tu cita en ZENBOO Beauty Center el ${appointment.dateIso} a las ${appointment.time} con ${appointment.employeeName}.`
+  );
+  return phone ? `https://wa.me/${phone}?text=${text}` : `https://wa.me/?text=${text}`;
+};
+
+const clientConfirmationLink = (appointment) => {
+  const phone = appointment.phone.replace(/\D/g, "");
+  const text = encodeURIComponent(
+    `Hola ${appointment.clientName}, tu cita en ZENBOO Beauty Center ha sido confirmada para el ${appointment.dateIso} a las ${appointment.time} con ${appointment.employeeName}. Te esperamos.`
+  );
+  return phone ? `https://wa.me/${phone}?text=${text}` : `https://wa.me/?text=${text}`;
+};
+
+const clientCancellationLink = (appointment) => {
+  const phone = appointment.phone.replace(/\D/g, "");
+  const text = encodeURIComponent(
+    `Hola ${appointment.clientName}, sentimos informarte que tu cita en ZENBOO Beauty Center para el ${appointment.dateIso} a las ${appointment.time} ha sido cancelada. Puedes escribirnos para reagendar.`
   );
   return phone ? `https://wa.me/${phone}?text=${text}` : `https://wa.me/?text=${text}`;
 };
@@ -887,69 +923,84 @@ byId("expenseForm").addEventListener("submit", (event) => {
 
 document.body.addEventListener("click", (event) => {
   const target = event.target;
+  const action = (name) => target.closest(`[data-${name}]`)?.dataset[name];
   let changed = false;
 
-  if (target.dataset.deleteClient) {
-    store.clients = store.clients.filter((client) => client.id !== target.dataset.deleteClient);
+  const deleteClient = action("deleteClient");
+  const deleteService = action("deleteService");
+  const deleteEmployee = action("deleteEmployee");
+  const deleteInvoice = action("deleteInvoice");
+  const deleteExpense = action("deleteExpense");
+  const cancelAppointment = action("cancelAppointment");
+  const confirmAppointment = action("confirmAppointment");
+  const editAppointmentId = action("editAppointment");
+  const slot = action("slot");
+  const viewInvoice = action("viewInvoice");
+  const printInvoice = action("printInvoice");
+  const payEmployeeId = action("payEmployee");
+  const resetSalary = action("resetSalary");
+
+  if (deleteClient) {
+    store.clients = store.clients.filter((client) => client.id !== deleteClient);
     changed = true;
   }
-  if (target.dataset.deleteService) {
-    store.services = store.services.filter((service) => service.id !== target.dataset.deleteService);
+  if (deleteService) {
+    store.services = store.services.filter((service) => service.id !== deleteService);
     changed = true;
   }
-  if (target.dataset.deleteEmployee) {
-    store.employees = store.employees.filter((employee) => employee.id !== target.dataset.deleteEmployee);
+  if (deleteEmployee) {
+    store.employees = store.employees.filter((employee) => employee.id !== deleteEmployee);
     changed = true;
   }
-  if (target.dataset.deleteInvoice) {
-    store.invoices = store.invoices.filter((invoice) => invoice.id !== target.dataset.deleteInvoice);
+  if (deleteInvoice) {
+    store.invoices = store.invoices.filter((invoice) => invoice.id !== deleteInvoice);
     changed = true;
   }
-  if (target.dataset.deleteExpense) {
-    store.expenses = store.expenses.filter((expense) => expense.id !== target.dataset.deleteExpense);
+  if (deleteExpense) {
+    store.expenses = store.expenses.filter((expense) => expense.id !== deleteExpense);
     changed = true;
   }
-  if (target.dataset.cancelAppointment) {
+  if (cancelAppointment) {
     store.appointments = store.appointments.map((appointment) =>
-      appointment.id === target.dataset.cancelAppointment ? { ...appointment, status: "Cancelada" } : appointment
+      appointment.id === cancelAppointment ? { ...appointment, status: "Cancelada" } : appointment
     );
     changed = true;
   }
-  if (target.dataset.confirmAppointment) {
+  if (confirmAppointment) {
     store.appointments = store.appointments.map((appointment) =>
-      appointment.id === target.dataset.confirmAppointment ? { ...appointment, status: "Confirmada" } : appointment
+      appointment.id === confirmAppointment ? { ...appointment, status: "Confirmada" } : appointment
     );
     changed = true;
   }
-  if (target.dataset.editAppointment) {
-    editAppointment(target.dataset.editAppointment);
+  if (editAppointmentId) {
+    editAppointment(editAppointmentId);
     return;
   }
-  if (target.dataset.slot) {
-    byId("appointmentTime").value = target.dataset.slot;
+  if (slot) {
+    byId("appointmentTime").value = slot;
     renderAvailableSlots();
     return;
   }
-  if (target.dataset.viewInvoice) {
-    const invoice = store.invoices.find((item) => item.id === target.dataset.viewInvoice);
+  if (viewInvoice) {
+    const invoice = store.invoices.find((item) => item.id === viewInvoice);
     if (invoice) showInvoice(invoice);
     return;
   }
-  if (target.dataset.printInvoice) {
-    const invoice = store.invoices.find((item) => item.id === target.dataset.printInvoice);
+  if (printInvoice) {
+    const invoice = store.invoices.find((item) => item.id === printInvoice);
     if (invoice) {
       showInvoice(invoice);
       printSection("invoice");
     }
     return;
   }
-  if (target.dataset.payEmployee) {
-    payEmployee(target.dataset.payEmployee);
+  if (payEmployeeId) {
+    payEmployee(payEmployeeId);
     return;
   }
-  if (target.dataset.resetSalary) {
+  if (resetSalary) {
     store.employees = store.employees.map((employee) =>
-      employee.id === target.dataset.resetSalary ? { ...employee, salaryPaid: false } : employee
+      employee.id === resetSalary ? { ...employee, salaryPaid: false } : employee
     );
     changed = true;
   }
@@ -1076,3 +1127,4 @@ migrateOldData();
 save();
 render();
 loadFromServer();
+setInterval(refreshFromCloud, 15000);
