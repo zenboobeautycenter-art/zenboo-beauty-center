@@ -36,6 +36,7 @@ let store = {
 const defaultAdminPassword = "1234";
 const protectedTabs = ["negocio", "empleadas", "nomina", "contabilidad"];
 let unlockedTabs = JSON.parse(sessionStorage.getItem("zenboo_unlocked_tabs")) || [];
+let serverLoaded = false;
 
 const migrateOldData = () => {
   store.invoices = store.invoices.map((invoice) => {
@@ -65,6 +66,7 @@ const saveLocal = () => {
 };
 
 const saveToServer = () => {
+  if (!serverLoaded) return;
   fetch(API_URL, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -82,9 +84,11 @@ const loadFromServer = async () => {
       ...data,
       settings: { ...store.settings, ...(data.settings || {}) },
     };
+    serverLoaded = true;
     saveLocal();
     render();
   } catch {
+    serverLoaded = true;
     render();
   }
 };
@@ -103,6 +107,33 @@ const today = () => new Date().toLocaleDateString("es-DO");
 const isoToday = () => new Date().toISOString().slice(0, 10);
 const currentMonth = () => new Date().toISOString().slice(0, 7);
 const numberValue = (id) => Number(byId(id).value || 0);
+const formatTime12 = (time) => {
+  const [hourText, minute = "00"] = String(time || "").split(":");
+  let hour = Number(hourText);
+  if (Number.isNaN(hour)) return time || "";
+  const suffix = hour >= 12 ? "PM" : "AM";
+  hour = hour % 12 || 12;
+  return `${hour}:${minute.padStart(2, "0")} ${suffix}`;
+};
+const inDateRange = (dateIso, start, end) => {
+  if (!dateIso) return false;
+  return (!start || dateIso >= start) && (!end || dateIso <= end);
+};
+const monthBounds = () => {
+  const now = new Date();
+  const start = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
+  const end = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().slice(0, 10);
+  return { start, end };
+};
+const biweeklyBounds = () => {
+  const now = new Date();
+  const day = now.getDate();
+  const startDay = day <= 15 ? 1 : 16;
+  const endDay = day <= 15 ? 15 : new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+  const start = new Date(now.getFullYear(), now.getMonth(), startDay).toISOString().slice(0, 10);
+  const end = new Date(now.getFullYear(), now.getMonth(), endDay).toISOString().slice(0, 10);
+  return { start, end };
+};
 
 const render = () => {
   renderSummary();
@@ -239,6 +270,11 @@ const renderClosingDefaults = () => {
   if (!byId("closingDate").value) byId("closingDate").value = isoToday();
   if (!byId("closingMonth").value) byId("closingMonth").value = currentMonth();
   if (!byId("appointmentDate").value) byId("appointmentDate").value = isoToday();
+  if (!byId("payrollStart").value || !byId("payrollEnd").value) {
+    const bounds = byId("payrollPeriod").value === "biweekly" ? biweeklyBounds() : monthBounds();
+    byId("payrollStart").value ||= bounds.start;
+    byId("payrollEnd").value ||= bounds.end;
+  }
 };
 
 const renderInvoiceOptions = () => {
@@ -277,6 +313,14 @@ const parseHours = (value) =>
     .map((hour) => hour.trim())
     .filter((hour) => /^\d{2}:\d{2}$/.test(hour));
 
+const whatsappPhone = (phone) => {
+  const clean = String(phone || "").replace(/\D/g, "");
+  if (clean.length === 10 && /^[89]\d{2}/.test(clean)) {
+    return `1${clean}`;
+  }
+  return clean;
+};
+
 const renderAvailableSlots = () => {
   const employeeId = byId("appointmentEmployee").value;
   const date = byId("appointmentDate").value;
@@ -296,7 +340,7 @@ const renderAvailableSlots = () => {
     .map((hour) => {
       const taken = occupied.includes(hour);
       const active = selectedTime === hour;
-      return `<button class="slot-btn ${active ? "active" : ""}" type="button" data-slot="${hour}" ${taken ? "disabled" : ""}>${taken ? "Ocupada" : hour}</button>`;
+      return `<button class="slot-btn ${active ? "active" : ""}" type="button" data-slot="${hour}" ${taken ? "disabled" : ""}>${taken ? "Ocupada" : formatTime12(hour)}</button>`;
     })
     .join("");
 };
@@ -315,7 +359,7 @@ const renderAppointments = () => {
       (appointment) => `
         <article class="item">
           <div>
-            <strong>${escapeHtml(appointment.clientName)} | ${escapeHtml(appointment.dateIso)} ${escapeHtml(appointment.time)}</strong>
+            <strong>${escapeHtml(appointment.clientName)} | ${escapeHtml(appointment.dateIso)} ${escapeHtml(formatTime12(appointment.time))}</strong>
             <small>${escapeHtml(appointment.service)} | ${escapeHtml(appointment.employeeName)} | ${escapeHtml(appointment.status)}</small>
           </div>
           <div class="item-actions">
@@ -340,34 +384,34 @@ const renderAppointments = () => {
 };
 
 const reminderLink = (appointment) => {
-  const phone = appointment.phone.replace(/\D/g, "");
+  const phone = whatsappPhone(appointment.phone);
   const text = encodeURIComponent(
-    `Hola ${appointment.clientName}, te recordamos tu cita en ZENBOO Beauty Center el ${appointment.dateIso} a las ${appointment.time} con ${appointment.employeeName}.`
+    `Hola ${appointment.clientName}, te recordamos tu cita en ZENBOO Beauty Center el ${appointment.dateIso} a las ${formatTime12(appointment.time)} con ${appointment.employeeName}.`
   );
   return phone ? `https://wa.me/${phone}?text=${text}` : `https://wa.me/?text=${text}`;
 };
 
 const clientConfirmationLink = (appointment) => {
-  const phone = appointment.phone.replace(/\D/g, "");
+  const phone = whatsappPhone(appointment.phone);
   const text = encodeURIComponent(
-    `Hola ${appointment.clientName}, tu cita en ZENBOO Beauty Center ha sido confirmada para el ${appointment.dateIso} a las ${appointment.time} con ${appointment.employeeName}. Te esperamos.`
+    `Hola ${appointment.clientName}, tu cita en ZENBOO Beauty Center ha sido confirmada para el ${appointment.dateIso} a las ${formatTime12(appointment.time)} con ${appointment.employeeName}. Te esperamos.`
   );
   return phone ? `https://wa.me/${phone}?text=${text}` : `https://wa.me/?text=${text}`;
 };
 
 const clientCancellationLink = (appointment) => {
-  const phone = appointment.phone.replace(/\D/g, "");
+  const phone = whatsappPhone(appointment.phone);
   const text = encodeURIComponent(
-    `Hola ${appointment.clientName}, sentimos informarte que tu cita en ZENBOO Beauty Center para el ${appointment.dateIso} a las ${appointment.time} ha sido cancelada. Puedes escribirnos para reagendar.`
+    `Hola ${appointment.clientName}, sentimos informarte que tu cita en ZENBOO Beauty Center para el ${appointment.dateIso} a las ${formatTime12(appointment.time)} ha sido cancelada. Puedes escribirnos para reagendar.`
   );
   return phone ? `https://wa.me/${phone}?text=${text}` : `https://wa.me/?text=${text}`;
 };
 
 const employeeReminderLink = (appointment) => {
   const employee = store.employees.find((item) => item.id === appointment.employeeId);
-  const phone = (employee?.phone || "").replace(/\D/g, "");
+  const phone = whatsappPhone(employee?.phone || "");
   const text = encodeURIComponent(
-    `Nueva cita en ZENBOO Beauty Center: ${appointment.clientName}, servicio ${appointment.service}, fecha ${appointment.dateIso}, hora ${appointment.time}. Telefono clienta: ${appointment.phone}.`
+    `Nueva cita en ZENBOO Beauty Center: ${appointment.clientName}, servicio ${appointment.service}, fecha ${appointment.dateIso}, hora ${formatTime12(appointment.time)}. Telefono clienta: ${appointment.phone}.`
   );
   return phone ? `https://wa.me/${phone}?text=${text}` : `https://wa.me/?text=${text}`;
 };
@@ -444,21 +488,72 @@ const renderInvoices = () => {
     .join("");
 };
 
-const payrollRows = () =>
-  store.employees.map((employee) => {
+const payrollPeriodConfig = () => ({
+  period: byId("payrollPeriod")?.value || "monthly",
+  start: byId("payrollStart")?.value || monthBounds().start,
+  end: byId("payrollEnd")?.value || monthBounds().end,
+});
+
+const salaryForPeriod = (employee, period, start, end) => {
+  const salary = employee.salary || 0;
+  const alreadyPaid = store.payrollPayments.some(
+    (payment) => payment.employeeId === employee.id && payment.start === start && payment.end === end && payment.period === period
+  );
+  if (alreadyPaid) return 0;
+  if (period === "biweekly") return salary / 2;
+  return salary;
+};
+
+const serviceBreakdown = (invoices) =>
+  Object.values(
+    invoices.reduce((result, invoice) => {
+      const name = invoice.serviceName || "Servicio";
+      if (!result[name]) {
+        result[name] = { name, count: 0, sales: 0, commission: 0 };
+      }
+      result[name].count += invoice.quantity || 1;
+      result[name].sales += invoice.total || 0;
+      result[name].commission += invoice.commission || 0;
+      return result;
+    }, {})
+  );
+
+const payrollRows = () => {
+  const config = payrollPeriodConfig();
+  return store.employees.map((employee) => {
     const employeeInvoices = store.invoices.filter(
-      (invoice) => invoice.employeeId === employee.id && !invoice.payrollPaid
+      (invoice) =>
+        invoice.employeeId === employee.id &&
+        !invoice.payrollPaid &&
+        inDateRange(invoice.dateIso, config.start, config.end)
     );
     const deductions = store.deductions.filter(
-      (deduction) => deduction.employeeId === employee.id && !deduction.paid
+      (deduction) =>
+        deduction.employeeId === employee.id &&
+        !deduction.paid &&
+        inDateRange(deduction.dateIso || isoToday(), config.start, config.end)
     );
     const sales = employeeInvoices.reduce((sum, invoice) => sum + invoice.total, 0);
     const commission = employeeInvoices.reduce((sum, invoice) => sum + (invoice.commission || 0), 0);
     const deductionTotal = deductions.reduce((sum, deduction) => sum + deduction.amount, 0);
-    const salary = employee.salaryPaid ? 0 : employee.salary || 0;
+    const salary = salaryForPeriod(employee, config.period, config.start, config.end);
     const net = salary + commission - deductionTotal;
-    return { employee, employeeInvoices, deductions, sales, commission, deductionTotal, salary, net };
+    return {
+      employee,
+      employeeInvoices,
+      deductions,
+      sales,
+      commission,
+      deductionTotal,
+      salary,
+      net,
+      services: serviceBreakdown(employeeInvoices),
+      period: config.period,
+      start: config.start,
+      end: config.end,
+    };
   });
+};
 
 const renderPayroll = () => {
   const list = byId("payrollList");
@@ -483,9 +578,11 @@ const renderPayroll = () => {
               <span>Descuentos: ${money.format(row.deductionTotal)}</span>
               <span>Servicios pendientes: ${row.employeeInvoices.length}</span>
             </div>
+            ${serviceText(row.services)}
             ${deductionText(row.deductions)}
           </div>
           <div class="item-actions">
+            <button class="print-btn" type="button" data-print-payroll="${row.employee.id}">Imprimir desglose</button>
             <button class="print-btn" type="button" data-pay-employee="${row.employee.id}">Marcar pagado</button>
           </div>
         </article>
@@ -494,12 +591,50 @@ const renderPayroll = () => {
     .join("");
 };
 
+const serviceText = (services) => {
+  if (!services.length) return '<small>Sin servicios realizados en este periodo.</small>';
+  return `<small>Servicios: ${services
+    .map((item) => `${escapeHtml(item.name)} x ${item.count} (${money.format(item.sales)})`)
+    .join(" | ")}</small>`;
+};
+
 const deductionText = (deductions) => {
   if (!deductions.length) return '<small>Sin gastos a descontar.</small>';
   return `<small>Descuentos: ${deductions
     .map((item) => `${escapeHtml(item.reason)} ${money.format(item.amount)}`)
     .join(" | ")}</small>`;
 };
+
+const payrollHtml = (row, paid = false) => `
+  <h3>${escapeHtml(store.settings.businessName || "ZENBOO Beauty Center")}</h3>
+  <p><strong>Desglose de pago de nomina</strong></p>
+  <p><strong>Empleada:</strong> ${escapeHtml(row.employee.name)}</p>
+  <p><strong>Periodo:</strong> ${escapeHtml(row.start)} al ${escapeHtml(row.end)} (${row.period === "biweekly" ? "Quincenal" : row.period === "monthly" ? "Mensual" : "Manual"})</p>
+  <p><strong>Sueldo:</strong> ${money.format(row.salary)}</p>
+  <p><strong>Comision:</strong> ${money.format(row.commission)}</p>
+  <p><strong>Total descuentos:</strong> ${money.format(row.deductionTotal)}</p>
+  <p><strong>Total pagado:</strong> ${money.format(row.net)}</p>
+  <p><strong>Estado:</strong> ${paid ? "Pagado" : "Pendiente"}</p>
+  <h4>Servicios realizados</h4>
+  ${
+    row.services.length
+      ? row.services
+          .map(
+            (service) =>
+              `<p>${escapeHtml(service.name)} x ${service.count} | Ventas ${money.format(service.sales)} | Comision ${money.format(service.commission)}</p>`
+          )
+          .join("")
+      : "<p>Sin servicios en este periodo.</p>"
+  }
+  <h4>Descuentos</h4>
+  ${
+    row.deductions.length
+      ? row.deductions
+          .map((deduction) => `<p>${escapeHtml(deduction.reason)} | ${money.format(deduction.amount)} | ${escapeHtml(deduction.date || "")}</p>`)
+          .join("")
+      : "<p>Sin descuentos.</p>"
+  }
+`;
 
 const renderAccounting = () => {
   const currentTotals = totals();
@@ -906,6 +1041,25 @@ byId("deductionForm").addEventListener("submit", (event) => {
   render();
 });
 
+byId("payrollPeriod").addEventListener("change", () => {
+  if (byId("payrollPeriod").value === "monthly") {
+    const bounds = monthBounds();
+    byId("payrollStart").value = bounds.start;
+    byId("payrollEnd").value = bounds.end;
+  }
+  if (byId("payrollPeriod").value === "biweekly") {
+    const bounds = biweeklyBounds();
+    byId("payrollStart").value = bounds.start;
+    byId("payrollEnd").value = bounds.end;
+  }
+  renderPayroll();
+});
+
+byId("payrollFilterForm").addEventListener("submit", (event) => {
+  event.preventDefault();
+  renderPayroll();
+});
+
 byId("expenseForm").addEventListener("submit", (event) => {
   event.preventDefault();
   store.expenses.push({
@@ -937,6 +1091,7 @@ document.body.addEventListener("click", (event) => {
   const slot = action("slot");
   const viewInvoice = action("viewInvoice");
   const printInvoice = action("printInvoice");
+  const printPayroll = action("printPayroll");
   const payEmployeeId = action("payEmployee");
   const resetSalary = action("resetSalary");
 
@@ -994,6 +1149,14 @@ document.body.addEventListener("click", (event) => {
     }
     return;
   }
+  if (printPayroll) {
+    const row = payrollRows().find((item) => item.employee.id === printPayroll);
+    if (row) {
+      byId("payrollPrintArea").innerHTML = payrollHtml(row);
+      printSection("payroll");
+    }
+    return;
+  }
   if (payEmployeeId) {
     payEmployee(payEmployeeId);
     return;
@@ -1014,6 +1177,9 @@ const payEmployee = (employeeId) => {
   const row = payrollRows().find((item) => item.employee.id === employeeId);
   if (!row) return;
 
+  const invoiceIds = row.employeeInvoices.map((invoice) => invoice.id);
+  const deductionIds = row.deductions.map((deduction) => deduction.id);
+
   store.payrollPayments.push({
     id: createId(),
     employeeId,
@@ -1021,23 +1187,29 @@ const payEmployee = (employeeId) => {
     salary: row.salary,
     commission: row.commission,
     deductions: row.deductionTotal,
+    deductionDetails: row.deductions.map((deduction) => ({
+      reason: deduction.reason,
+      amount: deduction.amount,
+      date: deduction.date,
+    })),
+    services: row.services,
+    start: row.start,
+    end: row.end,
+    period: row.period,
     net: row.net,
     date: today(),
     dateIso: isoToday(),
   });
 
   store.invoices = store.invoices.map((invoice) =>
-    invoice.employeeId === employeeId ? { ...invoice, payrollPaid: true } : invoice
+    invoiceIds.includes(invoice.id) ? { ...invoice, payrollPaid: true } : invoice
   );
   store.deductions = store.deductions.map((deduction) =>
-    deduction.employeeId === employeeId ? { ...deduction, paid: true } : deduction
+    deductionIds.includes(deduction.id) ? { ...deduction, paid: true } : deduction
   );
-  store.employees = store.employees.map((employee) =>
-    employee.id === employeeId ? { ...employee, salaryPaid: true } : employee
-  );
-
   save();
   render();
+  byId("payrollPrintArea").innerHTML = payrollHtml(row, true);
 };
 
 byId("previewDailyClose").addEventListener("click", () => {
@@ -1124,7 +1296,6 @@ const printSection = (mode) => {
 };
 
 migrateOldData();
-save();
 render();
 loadFromServer();
 setInterval(refreshFromCloud, 15000);

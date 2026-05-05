@@ -31,6 +31,14 @@ const SITE_USER = process.env.SITE_USER || "zenboo";
 const SITE_PASSWORD = process.env.SITE_PASSWORD || "";
 const BOOKING_WEBHOOK_URL = process.env.BOOKING_WEBHOOK_URL || "";
 const ADMIN_WHATSAPP_PHONE = process.env.ADMIN_WHATSAPP_PHONE || "";
+const formatTime12 = (time) => {
+  const [hourText, minute = "00"] = String(time || "").split(":");
+  let hour = Number(hourText);
+  if (Number.isNaN(hour)) return time || "";
+  const suffix = hour >= 12 ? "PM" : "AM";
+  hour = hour % 12 || 12;
+  return `${hour}:${minute.padStart(2, "0")} ${suffix}`;
+};
 
 const mimeTypes = {
   ".html": "text/html; charset=utf-8",
@@ -243,9 +251,9 @@ const server = http.createServer((req, res) => {
           status: "Pendiente",
           createdAt: new Date().toISOString(),
           source: "Link publico",
-          employeeWhatsappMessage: `Nueva cita en ZENBOO Beauty Center: ${String(booking.clientName).trim()}, servicio ${String(booking.service || "Unas").trim()}, fecha ${booking.dateIso}, hora ${booking.time}. Telefono clienta: ${String(booking.phone).trim()}.`,
+          employeeWhatsappMessage: `Nueva cita en ZENBOO Beauty Center: ${String(booking.clientName).trim()}, servicio ${String(booking.service || "Unas").trim()}, fecha ${booking.dateIso}, hora ${formatTime12(booking.time)}. Telefono clienta: ${String(booking.phone).trim()}.`,
           adminWhatsappPhone: ADMIN_WHATSAPP_PHONE,
-          adminWhatsappMessage: `Nueva cita en ZENBOO Beauty Center: ${String(booking.clientName).trim()} agendo ${String(booking.service || "Unas").trim()} con ${employee.name} para el ${booking.dateIso} a las ${booking.time}. Telefono: ${String(booking.phone).trim()}.`,
+          adminWhatsappMessage: `Nueva cita en ZENBOO Beauty Center: ${String(booking.clientName).trim()} agendo ${String(booking.service || "Unas").trim()} con ${employee.name} para el ${booking.dateIso} a las ${formatTime12(booking.time)}. Telefono: ${String(booking.phone).trim()}.`,
         };
 
         data.appointments.push(appointment);

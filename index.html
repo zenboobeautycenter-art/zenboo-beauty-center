@@ -373,9 +373,32 @@
           </label>
           <button type="submit">Agregar descuento</button>
         </form>
+        <form class="mini-form" id="payrollFilterForm">
+          <label>
+            Tipo de nomina
+            <select id="payrollPeriod">
+              <option value="monthly">Mensual</option>
+              <option value="biweekly">Quincenal</option>
+              <option value="custom">Fechas manuales</option>
+            </select>
+          </label>
+          <label>
+            Desde
+            <input id="payrollStart" type="date" />
+          </label>
+          <label>
+            Hasta
+            <input id="payrollEnd" type="date" />
+          </label>
+          <button type="submit">Ver nomina</button>
+        </form>
         <div class="payroll-total">
           <span>Total pendiente de pagar</span>
           <strong id="payrollTotal">RD$0.00</strong>
+        </div>
+        <div class="invoice-preview print-area" id="payrollPrintArea">
+          <h3>Desglose de nomina</h3>
+          <p>Selecciona una empleada para imprimir su pago.</p>
         </div>
         <div class="list" id="payrollList"></div>
         </div>

@@ -552,12 +552,15 @@ button[type="submit"]:hover,
   body[data-print-mode="invoice"] .invoice-preview,
   body[data-print-mode="invoice"] .invoice-preview *,
   body[data-print-mode="closing"] .closing-preview,
-  body[data-print-mode="closing"] .closing-preview * {
+  body[data-print-mode="closing"] .closing-preview *,
+  body[data-print-mode="payroll"] #payrollPrintArea,
+  body[data-print-mode="payroll"] #payrollPrintArea * {
     visibility: visible;
   }
 
   body[data-print-mode="invoice"] .invoice-preview,
-  body[data-print-mode="closing"] .closing-preview {
+  body[data-print-mode="closing"] .closing-preview,
+  body[data-print-mode="payroll"] #payrollPrintArea {
     position: absolute;
     inset: 24px auto auto 24px;
     width: calc(100% - 48px);

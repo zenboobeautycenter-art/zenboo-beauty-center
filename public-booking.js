@@ -2,6 +2,14 @@ const publicState = { employees: [], appointments: [], settings: {} };
 
 const publicById = (id) => document.getElementById(id);
 const publicToday = () => new Date().toISOString().slice(0, 10);
+const publicTime12 = (time) => {
+  const [hourText, minute = "00"] = String(time || "").split(":");
+  let hour = Number(hourText);
+  if (Number.isNaN(hour)) return time || "";
+  const suffix = hour >= 12 ? "PM" : "AM";
+  hour = hour % 12 || 12;
+  return `${hour}:${minute.padStart(2, "0")} ${suffix}`;
+};
 
 const loadPublicData = async () => {
   const response = await fetch("/api/public-booking-data");
@@ -51,7 +59,7 @@ const renderPublicSlots = () => {
     .map((hour) => {
       const taken = occupied.includes(hour);
       const active = selectedTime === hour;
-      return `<button class="slot-btn ${active ? "active" : ""}" type="button" data-public-slot="${hour}" ${taken ? "disabled" : ""}>${taken ? "Ocupada" : hour}</button>`;
+      return `<button class="slot-btn ${active ? "active" : ""}" type="button" data-public-slot="${hour}" ${taken ? "disabled" : ""}>${taken ? "Ocupada" : publicTime12(hour)}</button>`;
     })
     .join("");
 };
