@@ -1,0 +1,126 @@
+ZENBOO Beauty Center - publicar en internet
+
+Objetivo:
+Abrir la app desde cualquier PC, celular, tablet y cualquier WiFi.
+
+IMPORTANTE:
+No subas el archivo .env a GitHub. Ese archivo tiene tu clave privada.
+Ya esta protegido por .gitignore, pero revisa antes de subir.
+
+
+PASO 1 - Crear cuenta en GitHub
+
+1. Entra a:
+   https://github.com
+
+2. Crea una cuenta o inicia sesion.
+
+
+PASO 2 - Crear repositorio
+
+1. Toca el boton + arriba.
+2. Toca New repository.
+3. Nombre:
+   zenboo-beauty-center
+4. Marca Private si no quieres que el codigo sea publico.
+5. Toca Create repository.
+
+
+PASO 3 - Subir archivos
+
+1. En el repositorio nuevo, toca:
+   uploading an existing file
+
+2. Arrastra estos archivos desde la carpeta de la app:
+
+   index.html
+   styles.css
+   app.js
+   server.js
+   package.json
+   render.yaml
+   supabase-schema.sql
+   abrir-app.bat
+   COMO_ABRIR_EN_OTRAS_PC.txt
+   CONFIGURAR_SUPABASE.txt
+   PUBLICAR_EN_INTERNET.txt
+
+3. NO subas:
+
+   .env
+   zenboo-data.json
+
+4. Toca Commit changes.
+
+
+PASO 4 - Crear cuenta en Render
+
+1. Entra a:
+   https://render.com
+
+2. Crea cuenta o inicia sesion.
+
+3. Puedes entrar con GitHub para conectar mas facil.
+
+
+PASO 5 - Crear Web Service
+
+1. En Render toca New.
+2. Toca Web Service.
+3. Conecta GitHub si te lo pide.
+4. Elige el repositorio:
+   zenboo-beauty-center
+5. Configuracion:
+
+   Name: zenboo-beauty-center
+   Runtime: Node
+   Build Command: dejar vacio
+   Start Command: node server.js
+
+
+PASO 6 - Poner variables de Supabase
+
+En Render, en Environment Variables, agrega:
+
+SUPABASE_URL
+SUPABASE_SERVICE_KEY
+SUPABASE_TABLE
+APP_STATE_ID
+
+Valores:
+
+SUPABASE_URL=https://nwzaifdoujztuacytnno.supabase.co
+SUPABASE_SERVICE_KEY=tu_service_role_larga
+SUPABASE_TABLE=zenboo_app_state
+APP_STATE_ID=main
+
+Importante:
+No pongas /rest/v1/ al final del SUPABASE_URL.
+
+
+PASO 7 - Publicar
+
+1. Toca Create Web Service.
+2. Render empezara a publicar.
+3. Cuando termine, te dara un enlace parecido a:
+
+   https://zenboo-beauty-center.onrender.com
+
+Ese enlace abre tu app desde cualquier PC, telefono o WiFi.
+
+
+PASO 8 - Probar
+
+1. Abre el enlace de Render.
+2. Agrega un cliente de prueba.
+3. Ve a Supabase.
+4. Abre Table Editor.
+5. Abre zenboo_app_state.
+6. Confirma que la fila main se actualizo.
+
+
+Notas:
+
+- La base de datos vive en Supabase.
+- Render solo publica la app.
+- Si cambias el codigo luego, subes los cambios a GitHub y Render actualiza.

@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: zenboo-beauty-center
+    env: node
+    plan: free
+    buildCommand: ""
+    startCommand: "node server.js"
+    envVars:
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: SUPABASE_TABLE
+        value: zenboo_app_state
+      - key: APP_STATE_ID
+        value: main
+      - key: PORT
+        value: 10000

@@ -1,0 +1,13 @@
+{
+  "name": "zenboo-beauty-center",
+  "version": "1.0.0",
+  "description": "App de gestion para ZENBOO Beauty Center",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {},
+  "engines": {
+    "node": ">=18"
+  }
+}

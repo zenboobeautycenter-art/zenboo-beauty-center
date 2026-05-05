@@ -1,0 +1,459 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ZENBOO Beauty Center</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app">
+      <header class="topbar">
+        <section>
+          <p class="eyebrow">Panel de negocio</p>
+          <h1>ZENBOO Beauty Center</h1>
+        </section>
+        <section class="summary" aria-label="Resumen del negocio">
+          <article>
+            <span id="clientCount">0</span>
+            <small>Clientes</small>
+          </article>
+          <article>
+            <span id="employeeCount">0</span>
+            <small>Empleadas</small>
+          </article>
+          <article data-admin-only="true">
+            <span id="invoiceTotal">RD$0.00</span>
+            <small>Total generado</small>
+          </article>
+          <article data-admin-only="true">
+            <span id="expenseTotal">RD$0.00</span>
+            <small>Total de gastos</small>
+          </article>
+        </section>
+      </header>
+
+      <nav class="tabs" aria-label="Secciones">
+        <button class="tab active" type="button" data-tab="clientes">Clientes</button>
+        <button class="tab" type="button" data-tab="citas">Citas</button>
+        <button class="tab" type="button" data-tab="servicios">Servicios</button>
+        <button class="tab" type="button" data-tab="negocio">Datos negocio</button>
+        <button class="tab" type="button" data-tab="empleadas">Empleadas</button>
+        <button class="tab" type="button" data-tab="facturacion">Facturacion</button>
+        <button class="tab" type="button" data-tab="nomina">Nomina</button>
+        <button class="tab" type="button" data-tab="gastos">Gastos</button>
+        <button class="tab" type="button" data-tab="contabilidad">Contabilidad</button>
+      </nav>
+
+      <section class="panel active" id="clientes">
+        <div class="section-heading">
+          <h2>Clientes</h2>
+          <p>Registra datos basicos y documento fiscal.</p>
+        </div>
+        <form class="form-grid" id="clientForm">
+          <label>
+            Nombre
+            <input id="clientName" type="text" placeholder="Ej. Ana Perez" required />
+          </label>
+          <label>
+            Telefono
+            <input id="clientPhone" type="tel" placeholder="Ej. 809-555-1234" />
+          </label>
+          <label>
+            RNC o cedula
+            <input id="clientTaxId" type="text" placeholder="Opcional" />
+          </label>
+          <label>
+            Nota
+            <input id="clientNote" type="text" placeholder="Ej. Prefiere citas en la manana" />
+          </label>
+          <button type="submit">Guardar cliente</button>
+        </form>
+        <div class="list" id="clientList"></div>
+      </section>
+
+      <section class="panel" id="citas">
+        <div class="section-heading">
+          <h2>Citas automaticas</h2>
+          <p>Las clientas pueden elegir empleada, fecha y hora disponible.</p>
+        </div>
+        <form class="mini-form" id="instagramForm">
+          <label>
+            Instagram del negocio
+            <input id="instagramUrl" type="url" placeholder="https://instagram.com/zenboobeautycenter" />
+          </label>
+          <button type="submit">Guardar Instagram</button>
+          <a class="link-btn" id="instagramLink" href="#" target="_blank" rel="noreferrer">Abrir Instagram</a>
+        </form>
+        <form class="appointment-form" id="appointmentForm">
+          <label>
+            Nombre de la clienta
+            <input id="appointmentClient" type="text" placeholder="Ej. Maria Lopez" required />
+          </label>
+          <label>
+            Telefono
+            <input id="appointmentPhone" type="tel" placeholder="Ej. 8095551234" required />
+          </label>
+          <label>
+            Servicio
+            <input id="appointmentService" type="text" value="Unas" required />
+          </label>
+          <label>
+            Empleada
+            <select id="appointmentEmployee" required></select>
+          </label>
+          <label>
+            Fecha
+            <input id="appointmentDate" type="date" required />
+          </label>
+          <input id="appointmentTime" type="hidden" required />
+          <div class="wide-field">
+            <strong>Horas disponibles</strong>
+            <div class="slot-grid" id="availableSlots"></div>
+          </div>
+          <button type="submit">Reservar cita</button>
+        </form>
+        <div class="appointment-note">
+          <strong>Para Instagram:</strong>
+          <span>Copia el enlace de esta app cuando este publicada y ponlo en el boton de contacto o en la bio.</span>
+        </div>
+        <div class="list" id="appointmentList"></div>
+      </section>
+
+      <section class="panel" id="servicios">
+        <div class="section-heading">
+          <h2>Servicios</h2>
+          <p>Crea tu catalogo con duracion y precio.</p>
+        </div>
+        <form class="form-grid" id="serviceForm">
+          <label>
+            Servicio
+            <input id="serviceName" type="text" placeholder="Ej. Manicure gel" required />
+          </label>
+          <label>
+            Duracion
+            <input id="serviceDuration" type="text" placeholder="Ej. 45 min" />
+          </label>
+          <label>
+            Precio
+            <input id="servicePrice" type="number" min="0" step="0.01" placeholder="Ej. 1200" required />
+          </label>
+          <button type="submit">Guardar servicio</button>
+        </form>
+        <div class="list" id="serviceList"></div>
+      </section>
+
+      <section class="panel" id="negocio">
+        <div class="lock-box" data-lock-box="negocio">
+          <h2>Seccion protegida</h2>
+          <p>Escribe la clave de administracion para editar los datos del negocio.</p>
+          <form class="mini-form unlock-form" data-unlock-form="negocio">
+            <label>
+              Clave
+              <input type="password" data-password-input="negocio" placeholder="Clave" required />
+            </label>
+            <button type="submit">Entrar</button>
+          </form>
+        </div>
+        <div class="protected-content" data-protected-content="negocio">
+          <div class="section-heading">
+            <h2>Datos del negocio</h2>
+            <p>Estos datos se ponen automaticamente en las facturas.</p>
+          </div>
+          <form class="mini-form" id="businessForm">
+            <label>
+              Nombre del negocio
+              <input id="businessName" type="text" placeholder="ZENBOO Beauty Center" />
+            </label>
+            <label>
+              RNC del negocio
+              <input id="businessRnc" type="text" placeholder="RNC de ZENBOO" />
+            </label>
+            <label>
+              Mostrar RNC en factura
+              <select id="showBusinessRnc">
+                <option value="yes">Si, mostrar RNC</option>
+                <option value="no">No mostrar RNC</option>
+              </select>
+            </label>
+            <label>
+              Telefono del negocio
+              <input id="businessPhone" type="tel" placeholder="Ej. 809-555-1234" />
+            </label>
+            <label>
+              Direccion del negocio
+              <input id="businessAddress" type="text" placeholder="Direccion de ZENBOO" />
+            </label>
+            <label>
+              Correo
+              <input id="businessEmail" type="email" placeholder="correo@zenboo.com" />
+            </label>
+            <button type="submit">Guardar negocio</button>
+          </form>
+          <div class="section-heading compact">
+            <h3>Clave de acceso</h3>
+            <p>Cambia la clave para Datos negocio, Empleadas, Nomina y Contabilidad.</p>
+          </div>
+          <form class="mini-form" id="passwordForm">
+            <label>
+              Clave actual
+              <input id="currentAdminPassword" type="password" placeholder="Clave actual" required />
+            </label>
+            <label>
+              Nueva clave
+              <input id="newAdminPassword" type="password" placeholder="Nueva clave" required />
+            </label>
+            <label>
+              Repetir nueva clave
+              <input id="confirmAdminPassword" type="password" placeholder="Repetir clave" required />
+            </label>
+            <button type="submit">Cambiar clave</button>
+          </form>
+          <p class="form-message" id="passwordMessage"></p>
+        </div>
+      </section>
+
+      <section class="panel" id="empleadas">
+        <div class="lock-box" data-lock-box="empleadas">
+          <h2>Seccion protegida</h2>
+          <p>Escribe la clave de administracion para ver los datos de empleadas.</p>
+          <form class="mini-form unlock-form" data-unlock-form="empleadas">
+            <label>
+              Clave
+              <input type="password" data-password-input="empleadas" placeholder="Clave" required />
+            </label>
+            <button type="submit">Entrar</button>
+          </form>
+        </div>
+        <div class="protected-content" data-protected-content="empleadas">
+        <div class="section-heading">
+          <h2>Empleadas</h2>
+          <p>Agrega sueldo fijo y especialidad.</p>
+        </div>
+        <form class="form-grid" id="employeeForm">
+          <label>
+            Nombre
+            <input id="employeeName" type="text" placeholder="Ej. Laura Gomez" required />
+          </label>
+          <label>
+            Telefono
+            <input id="employeePhone" type="tel" placeholder="Ej. 809-555-0000" />
+          </label>
+          <label>
+            ID de identidad
+            <input id="employeeIdentity" type="text" placeholder="Ej. Cedula o pasaporte" />
+          </label>
+          <label>
+            Especialidad
+            <input id="employeeRole" type="text" placeholder="Ej. Unas, pelo, cejas" />
+          </label>
+          <label>
+            Sueldo fijo
+            <input id="employeeSalary" type="number" min="0" step="0.01" placeholder="Ej. 12000" />
+          </label>
+          <button type="submit">Guardar empleada</button>
+        </form>
+        <div class="list" id="employeeList"></div>
+        </div>
+      </section>
+
+      <section class="panel" id="facturacion">
+        <div class="section-heading">
+          <h2>Facturacion</h2>
+          <p>Crea facturas con comprobante fiscal NCF.</p>
+        </div>
+        <form class="mini-form" id="ncfForm">
+          <label>
+            Tipo NCF
+            <select id="ncfType">
+              <option value="B02">B02 - consumidor final</option>
+              <option value="B01">B01 - credito fiscal</option>
+              <option value="B15">B15 - gubernamental</option>
+            </select>
+          </label>
+          <label>
+            Proximo numero
+            <input id="ncfNext" type="number" min="1" step="1" />
+          </label>
+          <button type="submit">Guardar NCF</button>
+        </form>
+        <form class="mini-form" id="electronicForm">
+          <label>
+            Factura electronica
+            <select id="electronicEnabled">
+              <option value="no">No activa todavia</option>
+              <option value="yes">Preparar para e-CF</option>
+            </select>
+          </label>
+          <label>
+            Ambiente DGII
+            <select id="dgiiEnvironment">
+              <option value="Pruebas">Pruebas</option>
+              <option value="Produccion">Produccion</option>
+            </select>
+          </label>
+          <button type="submit">Guardar e-CF</button>
+        </form>
+        <form class="invoice-form" id="invoiceForm">
+          <label>
+            Cliente
+            <select id="invoiceClient" required></select>
+          </label>
+          <label>
+            Servicio
+            <select id="invoiceService" required></select>
+          </label>
+          <label>
+            Empleada
+            <select id="invoiceEmployee" required></select>
+          </label>
+          <label>
+            Metodo de pago
+            <select id="invoicePayment" required>
+              <option value="Efectivo">Efectivo</option>
+              <option value="Tarjeta">Tarjeta</option>
+              <option value="Transferencia">Transferencia</option>
+              <option value="Mixto">Mixto</option>
+            </select>
+          </label>
+          <label>
+            Tipo factura
+            <select id="invoiceElectronic">
+              <option value="normal">Normal</option>
+              <option value="electronica">Electronica e-CF</option>
+            </select>
+          </label>
+          <label>
+            Cantidad
+            <input id="invoiceQuantity" type="number" min="1" value="1" required />
+          </label>
+          <button type="submit">Crear factura</button>
+        </form>
+        <div class="invoice-preview print-area" id="invoicePreview">
+          <h3>Factura rapida</h3>
+          <p>Selecciona cliente, servicio y empleada para ver el total.</p>
+        </div>
+        <button class="print-btn standalone" type="button" id="printInvoiceBtn">Imprimir factura</button>
+        <div class="list" id="invoiceList"></div>
+      </section>
+
+      <section class="panel" id="nomina">
+        <div class="lock-box" data-lock-box="nomina">
+          <h2>Seccion protegida</h2>
+          <p>Escribe la clave de administracion para ver la nomina.</p>
+          <form class="mini-form unlock-form" data-unlock-form="nomina">
+            <label>
+              Clave
+              <input type="password" data-password-input="nomina" placeholder="Clave" required />
+            </label>
+            <button type="submit">Entrar</button>
+          </form>
+        </div>
+        <div class="protected-content" data-protected-content="nomina">
+        <div class="section-heading">
+          <h2>Nomina</h2>
+          <p>Sueldo fijo + comision acumulada - descuentos.</p>
+        </div>
+        <form class="mini-form" id="deductionForm">
+          <label>
+            Empleada
+            <select id="deductionEmployee" required></select>
+          </label>
+          <label>
+            Gasto a descontar
+            <input id="deductionReason" type="text" placeholder="Ej. Uniforme, adelanto, producto" required />
+          </label>
+          <label>
+            Monto
+            <input id="deductionAmount" type="number" min="0" step="0.01" placeholder="Ej. 500" required />
+          </label>
+          <button type="submit">Agregar descuento</button>
+        </form>
+        <div class="payroll-total">
+          <span>Total pendiente de pagar</span>
+          <strong id="payrollTotal">RD$0.00</strong>
+        </div>
+        <div class="list" id="payrollList"></div>
+        </div>
+      </section>
+
+      <section class="panel" id="gastos">
+        <div class="section-heading">
+          <h2>Gastos</h2>
+          <p>Las empleadas pueden registrar gastos del dia.</p>
+        </div>
+        <form class="mini-form" id="expenseForm">
+          <label>
+            Categoria
+            <input id="expenseCategory" type="text" placeholder="Ej. Renta, luz, productos" required />
+          </label>
+          <label>
+            Detalle
+            <input id="expenseDetail" type="text" placeholder="Ej. Compra de shampoo" />
+          </label>
+          <label>
+            Monto
+            <input id="expenseAmount" type="number" min="0" step="0.01" placeholder="Ej. 3500" required />
+          </label>
+          <button type="submit">Agregar gasto</button>
+        </form>
+        <div class="list" id="expenseList"></div>
+      </section>
+
+      <section class="panel" id="contabilidad">
+        <div class="lock-box" data-lock-box="contabilidad">
+          <h2>Seccion protegida</h2>
+          <p>Escribe la clave de administracion para ver contabilidad y cierres.</p>
+          <form class="mini-form unlock-form" data-unlock-form="contabilidad">
+            <label>
+              Clave
+              <input type="password" data-password-input="contabilidad" placeholder="Clave" required />
+            </label>
+            <button type="submit">Entrar</button>
+          </form>
+        </div>
+        <div class="protected-content" data-protected-content="contabilidad">
+        <div class="section-heading">
+          <h2>Contabilidad</h2>
+          <p>Ingresos, gastos, nomina y utilidad estimada.</p>
+        </div>
+        <section class="metrics" aria-label="Resumen contable">
+          <article><small>Ingresos</small><strong id="accountIncome">RD$0.00</strong></article>
+          <article><small>Gastos negocio</small><strong id="accountExpenses">RD$0.00</strong></article>
+          <article><small>Nomina pagada</small><strong id="accountPayroll">RD$0.00</strong></article>
+          <article><small>Utilidad estimada</small><strong id="accountProfit">RD$0.00</strong></article>
+        </section>
+        <section class="closing-box">
+          <div class="section-heading compact">
+            <h3>Cierre de caja</h3>
+            <p>Desglose por metodo de pago, gastos y ganancia.</p>
+          </div>
+          <form class="mini-form" id="closingForm">
+            <label>
+              Cierre del dia
+              <input id="closingDate" type="date" />
+            </label>
+            <button type="button" id="previewDailyClose">Ver cierre diario</button>
+            <button type="button" id="saveDailyClose">Guardar cierre del dia</button>
+          </form>
+          <form class="mini-form" id="monthForm">
+            <label>
+              Cierre de mes
+              <input id="closingMonth" type="month" />
+            </label>
+            <button type="button" id="previewMonthlyClose">Ver cierre mensual</button>
+            <button type="button" id="printMonthlyClose">Imprimir cierre de mes</button>
+          </form>
+          <div class="closing-preview print-area" id="closingPreview">
+            <h3>Cierre pendiente</h3>
+            <p>Elige un dia o un mes para ver el resumen.</p>
+          </div>
+        </section>
+        <div class="list" id="accountingList"></div>
+        </div>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>

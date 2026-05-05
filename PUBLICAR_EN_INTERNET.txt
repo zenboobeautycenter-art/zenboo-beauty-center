@@ -1,0 +1,39 @@
+ZENBOO Beauty Center - abrir desde cualquier WiFi o cualquier PC
+
+La version actual funciona en otras PC solo si estan en el mismo WiFi.
+Para abrirla desde cualquier lugar, hay que publicarla en internet.
+
+Que necesitas:
+
+1. Una cuenta de GitHub para guardar la app.
+2. Un servicio de hosting para publicarla.
+3. Una base de datos en la nube para que los datos no dependan de una sola PC.
+4. Opcional: un dominio, por ejemplo zenboobeautycenter.com.
+
+Opcion recomendada para la version real:
+
+- Hosting: Render, Railway, Fly.io o similar.
+- Base de datos: Supabase, PostgreSQL o Firebase.
+- App: esta misma app, pero conectada a esa base de datos.
+
+Importante:
+
+Si se publica solo como esta ahora, algunos servicios de hosting pueden borrar el archivo local zenboo-data.json al reiniciar.
+Por eso, para uso real fuera del negocio, el proximo paso correcto es conectar una base de datos en la nube.
+
+Pasos simples para la publicacion real:
+
+1. Crear base de datos en la nube.
+2. Cambiar la app para guardar clientes, facturas, citas, gastos y nomina en esa base de datos.
+3. Subir la app a GitHub.
+4. Conectar GitHub con el hosting.
+5. Publicar la app.
+6. Abrirla desde cualquier PC con una direccion como:
+   https://zenboo-beauty-center.onrender.com
+
+Luego puedes poner ese enlace en:
+
+- Instagram
+- WhatsApp
+- Cualquier computadora
+- Celular o tablet

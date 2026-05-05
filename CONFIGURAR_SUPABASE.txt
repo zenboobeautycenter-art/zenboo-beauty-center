@@ -1,0 +1,80 @@
+ZENBOO Beauty Center - configurar base de datos en la nube
+
+Esto hace que los registros no dependan de una computadora.
+
+PASO 1 - Crear la cuenta
+
+1. Entra a:
+   https://supabase.com
+
+2. Crea una cuenta.
+
+3. Crea un proyecto nuevo llamado:
+   zenboo
+
+
+PASO 2 - Crear la tabla
+
+1. Dentro de Supabase, entra a SQL Editor.
+
+2. Abre este archivo de la app:
+   supabase-schema.sql
+
+3. Copia todo el contenido.
+
+4. Pegalo en SQL Editor.
+
+5. Presiona Run.
+
+
+PASO 3 - Buscar las claves
+
+1. En Supabase entra a:
+   Project Settings
+
+2. Entra a:
+   API
+
+3. Copia:
+   Project URL
+
+4. Copia:
+   service_role key
+
+Importante:
+La service_role key es privada. No la publiques ni la mandes por WhatsApp.
+
+
+PASO 4 - Crear el archivo .env
+
+1. En la carpeta de la app, abre:
+   .env.example
+
+2. Haz una copia y llamala:
+   .env
+
+3. Cambia estos valores:
+
+   SUPABASE_URL=https://TU-PROYECTO.supabase.co
+   SUPABASE_SERVICE_KEY=TU_SERVICE_ROLE_KEY
+
+4. Guarda el archivo.
+
+
+PASO 5 - Abrir la app
+
+1. Abre:
+   abrir-app.bat
+
+2. La app correra en:
+   http://localhost:3000
+
+3. Si el servidor dice "Base de datos: Supabase", ya esta usando la nube.
+
+
+IMPORTANTE
+
+- La app seguira guardando un respaldo local en zenboo-data.json.
+- Si Supabase falla, la app intenta usar el respaldo local.
+- Para abrir desde cualquier lugar fuera del negocio, falta publicar la app en un hosting.
+- Supabase guarda los datos; el hosting pone la app en internet.

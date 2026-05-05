@@ -1,0 +1,27 @@
+ZENBOO Beauty Center - abrir en otras PC
+
+1. En la computadora principal, abre el archivo:
+   abrir-app.bat
+
+2. Deja esa ventana abierta mientras uses la app.
+
+3. En esa misma computadora, busca tu IP:
+   - Presiona Windows + R
+   - Escribe cmd
+   - Presiona Enter
+   - Escribe ipconfig
+   - Busca IPv4, por ejemplo 192.168.1.25
+
+4. En las otras PC conectadas al mismo WiFi, abre Chrome o Edge y escribe:
+   http://TU-IP:3000
+
+   Ejemplo:
+   http://192.168.1.25:3000
+
+5. Todas las PC compartiran los mismos datos porque se guardan en:
+   zenboo-data.json
+
+Importante:
+- La computadora principal debe estar encendida.
+- La ventana del servidor debe quedarse abierta.
+- Si quieres abrirla desde cualquier lugar fuera del negocio, luego se publica en internet con hosting y base de datos en la nube.
