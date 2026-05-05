@@ -235,6 +235,7 @@
           <p>Agrega sueldo fijo y especialidad.</p>
         </div>
         <form class="form-grid" id="employeeForm">
+          <input id="employeeEditId" type="hidden" />
           <label>
             Nombre
             <input id="employeeName" type="text" placeholder="Ej. Laura Gomez" required />
@@ -255,7 +256,8 @@
             Sueldo fijo
             <input id="employeeSalary" type="number" min="0" step="0.01" placeholder="Ej. 12000" />
           </label>
-          <button type="submit">Guardar empleada</button>
+          <button type="submit" id="employeeSubmitBtn">Guardar empleada</button>
+          <button class="print-btn" type="button" id="employeeCancelEdit" hidden>Cancelar edicion</button>
         </form>
         <div class="list" id="employeeList"></div>
         </div>

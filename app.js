@@ -185,20 +185,42 @@ const renderClients = () => {
   }
 
   list.innerHTML = store.clients
-    .map(
-      (client) => `
+    .map((client) => {
+      const history = clientHistory(client);
+      return `
         <article class="item">
           <div>
-            <strong>${escapeHtml(client.name)}</strong>
+            <strong>${escapeHtml(client.name)} | ${history.visits} visita(s)</strong>
             <small>${escapeHtml(client.phone || "Sin telefono")} | RNC/Cedula: ${escapeHtml(client.taxId || "No indicado")} | ${escapeHtml(client.note || "Sin nota")}</small>
+            <small>Servicios: ${history.services || "Sin servicios registrados"}</small>
           </div>
           <div class="item-actions">
             <button class="delete-btn" type="button" data-delete-client="${client.id}">Eliminar</button>
           </div>
         </article>
-      `
-    )
+      `;
+    })
     .join("");
+};
+
+const clientHistory = (client) => {
+  const phone = whatsappPhone(client.phone || "");
+  const name = String(client.name || "").toLowerCase();
+  const clientAppointments = store.appointments.filter((appointment) => {
+    const appointmentPhone = whatsappPhone(appointment.phone || "");
+    const appointmentName = String(appointment.clientName || "").toLowerCase();
+    return (phone && appointmentPhone === phone) || appointmentName === name;
+  });
+  const completed = clientAppointments.filter((appointment) => appointment.status === "Realizada");
+  const serviceCounts = completed.reduce((result, appointment) => {
+    const service = appointment.service || "Servicio";
+    result[service] = (result[service] || 0) + 1;
+    return result;
+  }, {});
+  const services = Object.entries(serviceCounts)
+    .map(([service, count]) => `${service} x ${count}`)
+    .join(" | ");
+  return { visits: completed.length, services };
 };
 
 const renderServices = () => {
@@ -242,6 +264,7 @@ const renderEmployees = () => {
           </div>
           <div class="item-actions">
             <button class="print-btn" type="button" data-reset-salary="${employee.id}">Nuevo pago</button>
+            <button class="print-btn" type="button" data-edit-employee="${employee.id}">Editar</button>
             <button class="delete-btn" type="button" data-delete-employee="${employee.id}">Eliminar</button>
           </div>
         </article>
@@ -365,9 +388,18 @@ const renderAppointments = () => {
           <div class="item-actions">
             ${
               appointment.status === "Cancelada"
-                ? '<span class="status-pill">Cancelada</span>'
+                ? `
+                  <span class="status-pill">Cancelada</span>
+                  <button class="delete-btn" type="button" data-delete-appointment="${appointment.id}">Borrar</button>
+                `
+                : appointment.status === "Realizada"
+                  ? `
+                    <span class="status-pill done">Realizada</span>
+                    <button class="delete-btn" type="button" data-delete-appointment="${appointment.id}">Borrar</button>
+                  `
                 : `
                   <button class="print-btn" type="button" data-confirm-appointment="${appointment.id}">Confirmar</button>
+                  <button class="print-btn" type="button" data-complete-appointment="${appointment.id}">Realizada</button>
                   <button class="print-btn" type="button" data-edit-appointment="${appointment.id}">Modificar</button>
                   <a class="print-btn" href="${clientConfirmationLink(appointment)}" target="_blank" rel="noreferrer">Confirmar WhatsApp</a>
                   <a class="print-btn" href="${clientCancellationLink(appointment)}" target="_blank" rel="noreferrer">Cancelar WhatsApp</a>
@@ -904,15 +936,34 @@ byId("serviceForm").addEventListener("submit", (event) => {
 
 byId("employeeForm").addEventListener("submit", (event) => {
   event.preventDefault();
-  store.employees.push({
-    id: createId(),
+  const editId = byId("employeeEditId").value;
+  const employeeData = {
     name: byId("employeeName").value.trim(),
     phone: byId("employeePhone").value.trim(),
     identity: byId("employeeIdentity").value.trim(),
     role: byId("employeeRole").value.trim(),
     salary: numberValue("employeeSalary"),
-  });
+  };
+
+  if (editId) {
+    store.employees = store.employees.map((employee) =>
+      employee.id === editId ? { ...employee, ...employeeData } : employee
+    );
+    store.appointments = store.appointments.map((appointment) =>
+      appointment.employeeId === editId ? { ...appointment, employeeName: employeeData.name } : appointment
+    );
+    store.invoices = store.invoices.map((invoice) =>
+      invoice.employeeId === editId ? { ...invoice, employeeName: employeeData.name } : invoice
+    );
+  } else {
+    store.employees.push({
+      id: createId(),
+      ...employeeData,
+    });
+  }
+
   event.target.reset();
+  resetEmployeeForm();
   save();
   render();
 });
@@ -1085,9 +1136,12 @@ document.body.addEventListener("click", (event) => {
   const deleteEmployee = action("deleteEmployee");
   const deleteInvoice = action("deleteInvoice");
   const deleteExpense = action("deleteExpense");
+  const deleteAppointment = action("deleteAppointment");
   const cancelAppointment = action("cancelAppointment");
   const confirmAppointment = action("confirmAppointment");
+  const completeAppointment = action("completeAppointment");
   const editAppointmentId = action("editAppointment");
+  const editEmployeeId = action("editEmployee");
   const slot = action("slot");
   const viewInvoice = action("viewInvoice");
   const printInvoice = action("printInvoice");
@@ -1115,6 +1169,10 @@ document.body.addEventListener("click", (event) => {
     store.expenses = store.expenses.filter((expense) => expense.id !== deleteExpense);
     changed = true;
   }
+  if (deleteAppointment) {
+    store.appointments = store.appointments.filter((appointment) => appointment.id !== deleteAppointment);
+    changed = true;
+  }
   if (cancelAppointment) {
     store.appointments = store.appointments.map((appointment) =>
       appointment.id === cancelAppointment ? { ...appointment, status: "Cancelada" } : appointment
@@ -1127,8 +1185,18 @@ document.body.addEventListener("click", (event) => {
     );
     changed = true;
   }
+  if (completeAppointment) {
+    store.appointments = store.appointments.map((appointment) =>
+      appointment.id === completeAppointment ? { ...appointment, status: "Realizada" } : appointment
+    );
+    changed = true;
+  }
   if (editAppointmentId) {
     editAppointment(editAppointmentId);
+    return;
+  }
+  if (editEmployeeId) {
+    editEmployee(editEmployeeId);
     return;
   }
   if (slot) {
@@ -1172,6 +1240,32 @@ document.body.addEventListener("click", (event) => {
     render();
   }
 });
+
+byId("employeeCancelEdit").addEventListener("click", () => {
+  byId("employeeForm").reset();
+  resetEmployeeForm();
+});
+
+const editEmployee = (employeeId) => {
+  const employee = store.employees.find((item) => item.id === employeeId);
+  if (!employee) return;
+  byId("employeeEditId").value = employee.id;
+  byId("employeeName").value = employee.name || "";
+  byId("employeePhone").value = employee.phone || "";
+  byId("employeeIdentity").value = employee.identity || "";
+  byId("employeeRole").value = employee.role || "";
+  byId("employeeSalary").value = employee.salary || "";
+  byId("employeeSubmitBtn").textContent = "Actualizar empleada";
+  byId("employeeCancelEdit").hidden = false;
+  document.querySelector('[data-tab="empleadas"]').click();
+  byId("employeeName").focus();
+};
+
+const resetEmployeeForm = () => {
+  byId("employeeEditId").value = "";
+  byId("employeeSubmitBtn").textContent = "Guardar empleada";
+  byId("employeeCancelEdit").hidden = true;
+};
 
 const payEmployee = (employeeId) => {
   const row = payrollRows().find((item) => item.employee.id === employeeId);
