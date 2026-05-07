@@ -126,6 +126,7 @@
           <p>Crea tu catalogo con duracion y precio.</p>
         </div>
         <form class="form-grid" id="serviceForm">
+          <input id="serviceEditId" type="hidden" />
           <label>
             Servicio
             <input id="serviceName" type="text" placeholder="Ej. Manicure gel" required />
@@ -138,7 +139,8 @@
             Precio
             <input id="servicePrice" type="number" min="0" step="0.01" placeholder="Ej. 1200" required />
           </label>
-          <button type="submit">Guardar servicio</button>
+          <button type="submit" id="serviceSubmitBtn">Guardar servicio</button>
+          <button class="print-btn" type="button" id="serviceCancelEdit" hidden>Cancelar edicion</button>
         </form>
         <div class="list" id="serviceList"></div>
       </section>
@@ -308,6 +310,10 @@
           <label>
             Servicio
             <select id="invoiceService" required></select>
+          </label>
+          <label>
+            Precio en factura
+            <input id="invoiceCustomPrice" type="number" min="0" step="0.01" placeholder="Precio" />
           </label>
           <label>
             Empleada

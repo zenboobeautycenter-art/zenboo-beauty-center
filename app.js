@@ -239,6 +239,7 @@ const renderServices = () => {
             <small>${escapeHtml(service.duration || "Duracion no indicada")}</small>
           </div>
           <div class="item-actions">
+            <button class="print-btn" type="button" data-edit-service="${service.id}" onclick="editService('${service.id}')">Editar</button>
             <button class="delete-btn" type="button" data-delete-service="${service.id}">Eliminar</button>
           </div>
         </article>
@@ -465,13 +466,15 @@ const renderInvoicePreview = () => {
     return;
   }
 
-  const total = service.price * quantity;
+  const unitPrice = numberValue("invoiceCustomPrice") || service.price;
+  const total = unitPrice * quantity;
   const commission = total * 0.1;
   const ncf = formatNcf(store.settings.ncfType, store.settings.ncfNext);
   preview.innerHTML = invoiceHtml({
     clientName: client.name,
     clientTaxId: client.taxId,
     serviceName: service.name,
+    unitPrice,
     employeeName: employee.name,
     quantity,
     total,
@@ -836,6 +839,7 @@ const invoiceHtml = (invoice) => `
   <p><strong>Cliente:</strong> ${escapeHtml(invoice.clientName || "")}</p>
   <p><strong>RNC/Cedula:</strong> ${escapeHtml(invoice.clientTaxId || "No indicado")}</p>
   <p><strong>Servicio:</strong> ${escapeHtml(invoice.serviceName || "")} x ${invoice.quantity || 1}</p>
+  <p><strong>Precio unitario:</strong> ${money.format(invoice.unitPrice || (invoice.total || 0) / (invoice.quantity || 1))}</p>
   <p><strong>Empleada:</strong> ${escapeHtml(invoice.employeeName || "")}</p>
   <p><strong>Metodo de pago:</strong> ${escapeHtml(invoice.paymentMethod || "No indicado")}</p>
   <p><strong>Factura electronica:</strong> ${escapeHtml(invoice.electronicType === "electronica" ? "e-CF" : "No")}</p>
@@ -923,13 +927,24 @@ byId("clientForm").addEventListener("submit", (event) => {
 
 byId("serviceForm").addEventListener("submit", (event) => {
   event.preventDefault();
-  store.services.push({
-    id: createId(),
+  const editId = byId("serviceEditId").value;
+  const serviceData = {
     name: byId("serviceName").value.trim(),
     duration: byId("serviceDuration").value.trim(),
     price: numberValue("servicePrice"),
-  });
+  };
+
+  if (editId) {
+    store.services = store.services.map((service) => (service.id === editId ? { ...service, ...serviceData } : service));
+  } else {
+    store.services.push({
+      id: createId(),
+      ...serviceData,
+    });
+  }
+
   event.target.reset();
+  resetServiceForm();
   save();
   render();
 });
@@ -1039,13 +1054,15 @@ byId("invoiceForm").addEventListener("submit", (event) => {
   const electronicType = byId("invoiceElectronic").value;
   if (!client || !service || !employee) return;
 
-  const total = service.price * quantity;
+  const unitPrice = numberValue("invoiceCustomPrice") || service.price;
+  const total = unitPrice * quantity;
   const invoice = {
     id: createId(),
     clientId: client.id,
     clientName: client.name,
     clientTaxId: client.taxId,
     serviceName: service.name,
+    unitPrice,
     employeeId: employee.id,
     employeeName: employee.name,
     quantity,
@@ -1142,6 +1159,7 @@ document.body.addEventListener("click", (event) => {
   const completeAppointment = action("completeAppointment");
   const editAppointmentId = action("editAppointment");
   const editEmployeeId = action("editEmployee");
+  const editServiceId = action("editService");
   const slot = action("slot");
   const viewInvoice = action("viewInvoice");
   const printInvoice = action("printInvoice");
@@ -1199,6 +1217,10 @@ document.body.addEventListener("click", (event) => {
     editEmployee(editEmployeeId);
     return;
   }
+  if (editServiceId) {
+    editService(editServiceId);
+    return;
+  }
   if (slot) {
     byId("appointmentTime").value = slot;
     renderAvailableSlots();
@@ -1246,6 +1268,30 @@ byId("employeeCancelEdit").addEventListener("click", () => {
   resetEmployeeForm();
 });
 
+byId("serviceCancelEdit").addEventListener("click", () => {
+  byId("serviceForm").reset();
+  resetServiceForm();
+});
+
+const editService = (serviceId) => {
+  const service = store.services.find((item) => item.id === serviceId);
+  if (!service) return;
+  byId("serviceEditId").value = service.id;
+  byId("serviceName").value = service.name || "";
+  byId("serviceDuration").value = service.duration || "";
+  byId("servicePrice").value = service.price || "";
+  byId("serviceSubmitBtn").textContent = "Actualizar servicio";
+  byId("serviceCancelEdit").hidden = false;
+  document.querySelector('[data-tab="servicios"]').click();
+  byId("serviceName").focus();
+};
+
+const resetServiceForm = () => {
+  byId("serviceEditId").value = "";
+  byId("serviceSubmitBtn").textContent = "Guardar servicio";
+  byId("serviceCancelEdit").hidden = true;
+};
+
 const editEmployee = (employeeId) => {
   const employee = store.employees.find((item) => item.id === employeeId);
   if (!employee) return;
@@ -1275,6 +1321,7 @@ const resetEmployeeForm = () => {
 
 window.editEmployee = editEmployee;
 window.deleteAppointmentById = deleteAppointmentById;
+window.editService = editService;
 
 const payEmployee = (employeeId) => {
   const row = payrollRows().find((item) => item.employee.id === employeeId);
@@ -1343,7 +1390,13 @@ byId("printMonthlyClose").addEventListener("click", () => {
 
 byId("printInvoiceBtn").addEventListener("click", () => printSection("invoice"));
 
-["invoiceClient", "invoiceService", "invoiceEmployee", "invoicePayment", "invoiceElectronic", "invoiceQuantity"].forEach((id) => {
+byId("invoiceService").addEventListener("change", () => {
+  const service = store.services.find((item) => item.id === byId("invoiceService").value);
+  byId("invoiceCustomPrice").value = service ? service.price : "";
+  renderInvoicePreview();
+});
+
+["invoiceClient", "invoiceEmployee", "invoicePayment", "invoiceElectronic", "invoiceQuantity", "invoiceCustomPrice"].forEach((id) => {
   byId(id).addEventListener("input", renderInvoicePreview);
 });
 
